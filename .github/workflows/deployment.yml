@@ -1,0 +1,43 @@
+name: Deployment
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_id:
+        description: 'Build ID'
+        required: true
+        type: string
+      branch_name:
+        description: 'Branch name'
+        required: true
+        type: string
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.branch_name }}
+      
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-${{ github.event.inputs.build_id }}
+          path: build/
+      
+      - name: Deploy to production
+        run: |
+          echo "Deploying build ${{ github.event.inputs.build_id }} from branch ${{ github.event.inputs.branch_name }}"
+          # Add your deployment commands here
+          # Example: aws s3 sync build/ s3://your-bucket/
+          # Example: npx netlify-cli deploy --prod --dir=build
+      
+      - name: Deployment Summary
+        run: |
+          echo "Deployment completed successfully!"
+          echo "Build ID: ${{ github.event.inputs.build_id }}"
+          echo "Branch: ${{ github.event.inputs.branch_name }}"
+          echo "Deployment timestamp: $(date)"
