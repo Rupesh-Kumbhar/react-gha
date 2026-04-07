@@ -1,48 +1,49 @@
 name: Build
-
 on:
   workflow_dispatch:
     inputs:
-      build_id:
-        description: 'Build ID'
-        required: true
-        type: string
       branch_name:
-        description: 'Branch name'
+        description: 'Branch to build from'
         required: true
+        default: 'main'
         type: string
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    
+    outputs:
+      build_id: ${{ steps.generate-build-id.outputs.build_id }}
     steps:
+      - name: Generate Build ID
+        id: generate-build-id
+        run: echo "build_id=$(date +%s)-$(git rev-parse --short HEAD 2>/dev/null || echo $RANDOM)" >> $GITHUB_OUTPUT
+
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.inputs.branch_name }}
-      
+          ref: ${{ inputs.branch_name }}
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '18'
           cache: 'npm'
-      
+
       - name: Install dependencies
-        run: npm install
-      
+        run: npm ci
+
       - name: Build React app
         run: npm run build
-      
+
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: build-${{ github.event.inputs.build_id }}
+          name: build-${{ steps.generate-build-id.outputs.build_id }}
           path: build/
           retention-days: 7
-      
-      - name: Output build info
+
+      - name: Output Build Info
         run: |
-          echo "Build ID: ${{ github.event.inputs.build_id }}"
-          echo "Branch: ${{ github.event.inputs.branch_name }}"
-          echo "Commit SHA: ${{ github.sha }}"
+          echo "Build completed successfully!"
+          echo "Build ID: ${{ steps.generate-build-id.outputs.build_id }}"
+          echo "Branch: ${{ inputs.branch_name }}"
