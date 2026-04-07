@@ -1,5 +1,4 @@
-name: Deployment
-
+name: Deploy
 on:
   workflow_dispatch:
     inputs:
@@ -10,6 +9,7 @@ on:
       branch_name:
         description: 'Branch name'
         required: true
+        default: 'main'
         type: string
 
 jobs:
@@ -20,24 +20,41 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.inputs.branch_name }}
-      
+          ref: ${{ inputs.branch_name }}
+
       - name: Download build artifacts
         uses: actions/download-artifact@v4
         with:
-          name: build-${{ github.event.inputs.build_id }}
+          name: build-${{ inputs.build_id }}
           path: build/
-      
-      - name: Deploy to production
+
+      - name: Verify build artifacts
         run: |
-          echo "Deploying build ${{ github.event.inputs.build_id }} from branch ${{ github.event.inputs.branch_name }}"
+          if [ -d "build" ] && [ "$(ls -A build)" ]; then
+            echo "✓ Build artifacts found and ready to deploy"
+            ls -la build/
+          else
+            echo "✗ No build artifacts found"
+            exit 1
+          fi
+
+      - name: Deploy to hosting
+        run: |
+          echo "Deploying build: ${{ inputs.build_id }}"
+          echo "From branch: ${{ inputs.branch_name }}"
           # Add your deployment commands here
-          # Example: aws s3 sync build/ s3://your-bucket/
-          # Example: npx netlify-cli deploy --prod --dir=build
-      
+          # Example for static hosting (uncomment and modify):
+          # - Deploy to S3: aws s3 sync build/ s3://your-bucket-name/
+          # - Deploy to Netlify: netlify deploy --prod --dir=build
+          # - Deploy to Vercel: vercel deploy --prod
+          echo "Deployment completed!"
+
       - name: Deployment Summary
         run: |
-          echo "Deployment completed successfully!"
-          echo "Build ID: ${{ github.event.inputs.build_id }}"
-          echo "Branch: ${{ github.event.inputs.branch_name }}"
-          echo "Deployment timestamp: $(date)"
+          echo "========================================="
+          echo "Deployment Summary"
+          echo "========================================="
+          echo "Build ID: ${{ inputs.build_id }}"
+          echo "Branch: ${{ inputs.branch_name }}"
+          echo "Deployed at: $(date)"
+          echo "=========================================
