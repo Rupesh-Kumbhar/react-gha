@@ -6,11 +6,7 @@ on:
         description: 'Build ID'
         required: true
         type: string
-      branch_name:
-        description: 'Branch name'
-        required: true
-        default: 'main'
-        type: string
+
 
 jobs:
   deploy:
