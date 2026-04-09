@@ -1,5 +1,5 @@
 name: Build
-run-name: "Build : ${{github.ref_name}}_{{github.run_id}} "
+run-name: "Build : ${{github.ref_name}}_{{github.build_id}} "
 on:
   workflow_dispatch:
 
