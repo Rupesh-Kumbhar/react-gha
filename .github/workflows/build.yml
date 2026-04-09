@@ -1,4 +1,5 @@
 name: Build
+run-name: "Build : ${{github.ref_name}}_{{github.run_id}} "
 on:
   workflow_dispatch:
 
@@ -11,7 +12,10 @@ jobs:
     steps:
       - name: Generate Build ID
         id: generate-build-id
-        run: echo "build_id=$(date +%s)-$(git rev-parse --short HEAD 2>/dev/null || echo $RANDOM)" >> $GITHUB_OUTPUT
+        run: |
+          BRANCH=${GITHUB_REF#refs/heads/}
+          BRANCH=${BRANCH//\//-}
+          echo "build_id=${BRANCH}_$(date +%s)" >> $GITHUB_OUTPUT
 
       - name: Checkout code
         uses: actions/checkout@v4
