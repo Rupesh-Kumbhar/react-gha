@@ -1,5 +1,5 @@
 name: Build
-run-name: "Build : ${{github.ref_name}}_{{github.run_id}} "
+run-name: "Build : ${{github.ref_name}}_{{github.build_id}} "
 on:
   workflow_dispatch:
 
@@ -16,6 +16,18 @@ jobs:
           BRANCH=${GITHUB_REF#refs/heads/}
           BRANCH=${BRANCH//\//-}
           echo "build_id=${BRANCH}_$(date +%s)" >> $GITHUB_OUTPUT
+
+      - name: Set workflow run name
+        if: always()
+        env:
+          BUILD_ID: ${{ steps.generate-build-id.outputs.build_id }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          curl -s -X PATCH \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer $GITHUB_TOKEN" \
+            https://api.github.com/repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID \
+            -d "{\"name\":\"$BUILD_ID\"}"
 
       - name: Checkout code
         uses: actions/checkout@v4
