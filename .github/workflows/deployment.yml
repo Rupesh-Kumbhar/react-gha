@@ -1,5 +1,5 @@
 name: Deploy
-run-name: "Deploy : ${{inputs.environment}} : ${{inputs.build_id}} "
+run-name: "Deploy : ${{inputs.build_id}} "
 on:
   workflow_dispatch:
     inputs:
