@@ -31,11 +31,25 @@ jobs:
           echo "Listing artifacts for repository: ${GITHUB_REPOSITORY}"
           curl -s -H "Authorization: token $GITHUB_TOKEN" "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/artifacts" | jq -r '.artifacts[] | "id:\(.id) name:\(.name) expired:\(.expired)"' || true
 
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: build-${{ inputs.build_id }}
-          path: build/
+      - name: Download build artifacts (API)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ARTIFACT_NAME: build-${{ inputs.build_id }}
+        run: |
+          sudo apt-get update && sudo apt-get install -y jq unzip
+          echo "Searching for artifact: $ARTIFACT_NAME"
+          artifacts_url="https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/artifacts"
+          artifact_id=$(curl -s -H "Authorization: token $GITHUB_TOKEN" "$artifacts_url" | jq -r --arg name "$ARTIFACT_NAME" '.artifacts[] | select(.name==$name) | .id' | head -n1)
+          if [ -z "$artifact_id" ] || [ "$artifact_id" = "null" ]; then
+            echo "Artifact not found: $ARTIFACT_NAME"
+            exit 1
+          fi
+          echo "Found artifact id: $artifact_id"
+          download_url="https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/artifacts/${artifact_id}/zip"
+          curl -s -H "Authorization: token $GITHUB_TOKEN" -L -o artifact.zip "$download_url"
+          unzip -o artifact.zip -d build
+          rm artifact.zip
+
 
       - name: Verify build artifacts
         run: |
