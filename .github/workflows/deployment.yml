@@ -34,7 +34,7 @@ jobs:
       - name: Download build artifacts
         uses: actions/download-artifact@v4
         with:
-          name: ${{ inputs.build_id }}
+          name: build-${{ inputs.build_id }}
           path: build/
 
       - name: Verify build artifacts
